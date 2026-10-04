@@ -24,61 +24,61 @@ try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) save = Object
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
 
 // ---------- データ ----------
-const GW = 8, GH = 5, CELL = 34, GX = 16, GY = 262;
+const GW = 7, GH = 5, CELL = 38, GX = 10, GY = 262;
 const STARM = [0, 1, 1.7, 2.6];
 const TIERCOL = ["", "#6e6a9c", "#4a7be8", "#e0a030"];
 const ITEMS = {
-  ofuda:    { n:"御札",       w:1,h:1, tier:1, cost:3, cd:3,   atk:4,  tags:["weapon"] },
-  kodachi:  { n:"小太刀",     w:1,h:2, tier:1, cost:4, cd:3,   atk:6,  tags:["weapon"] },
-  hamaya:   { n:"破魔矢",     w:1,h:2, tier:1, cost:5, cd:3.5, atk:9,  tags:["weapon"] },
-  bakeneko: { n:"化け猫",     w:1,h:1, tier:1, cost:4, cd:2.5, atk:3,  tags:["weapon","creature"] },
-  karakasa: { n:"からかさ",   w:2,h:1, tier:1, cost:4, cd:4,   blk:7 },
-  kagami:   { n:"古鏡",       w:1,h:1, tier:1, cost:4, cd:5,   blk:8 },
-  hyoutan:  { n:"ひょうたん", w:1,h:1, tier:1, cost:4, cd:5,   heal:6 },
-  kitsunebi:{ n:"狐火",       w:1,h:1, tier:1, cost:4, cd:4,   burn:3 },
-  dokumanju:{ n:"毒まんじゅう",w:1,h:1,tier:1, cost:4, cd:4,   psn:2 },
-  chouchin: { n:"提灯",       w:1,h:1, tier:1, cost:3, aura:{tag:"weapon", atk:2} },
-  kappa:    { n:"河童",       w:1,h:1, tier:1, cost:5, cd:4,   atk:3, heal:3, tags:["creature"] },
-  youtou:   { n:"妖刀",       w:1,h:2, tier:2, cost:7, cd:3,   atk:11, tags:["weapon"] },
-  kanabou:  { n:"鬼の金棒",   w:2,h:1, tier:2, cost:8, cd:5,   atk:20, tags:["weapon"] },
-  juzu:     { n:"数珠",       w:1,h:1, tier:2, cost:6, aura:{cdMul:0.88} },
+  chouchin: { n:"提灯お化け",     w:1,h:1, tier:1, cost:3, aura:{tag:"weapon", atk:2} },
+  zouri:    { n:"化け草履",       w:1,h:1, tier:1, cost:3, cd:2.5, atk:3,  tags:["weapon"] },
+  geta:     { n:"一本足の下駄",   w:1,h:1, tier:1, cost:4, cd:3.5, atk:6,  tags:["weapon"] },
+  katana:   { n:"化け刀",         w:1,h:2, tier:1, cost:5, cd:3,   atk:8,  tags:["weapon"] },
+  kama:     { n:"ぶんぶく茶釜",   w:1,h:1, tier:1, cost:4, cd:4,   burn:3 },
+  tsubo:    { n:"毒壺",           w:1,h:1, tier:1, cost:4, cd:4,   psn:2 },
+  hyoutan:  { n:"ひょうたん小僧", w:1,h:1, tier:1, cost:4, cd:5,   heal:6 },
+  kagami:   { n:"古鏡",           w:1,h:1, tier:1, cost:4, cd:5,   blk:8 },
+  karakasa: { n:"唐傘小僧",       w:1,h:2, tier:1, cost:5, cd:4,   blk:8 },
+  taiko:    { n:"雷太鼓",         w:1,h:1, tier:2, cost:6, aura:{cdMul:0.88} },
+  biwa:     { n:"琵琶牧々",       w:1,h:2, tier:2, cost:6, cd:4,   atk:6, heal:3 },
+  fude:     { n:"筆の付喪神",     w:1,h:2, tier:2, cost:6, cd:4,   atk:3, psn:2, tags:["weapon"] },
+  koto:     { n:"琴古主",         w:2,h:1, tier:2, cost:8, cd:4,   heal:8, blk:4 },
+  kozuchi:  { n:"打出の小槌",     w:2,h:1, tier:2, cost:8, cd:5,   atk:20, tags:["weapon"] },
   // 合体でしか作れない
-  nekokasha:{ n:"猫火車",     w:1,h:1, tier:3, cost:9, cd:2.2, atk:4, burn:1, tags:["weapon","creature"], fusion:true },
-  onibi:    { n:"鬼火",       w:1,h:1, tier:3, cost:9, cd:3,   burn:4, psn:2, fusion:true },
-  taimaya:  { n:"退魔の矢",   w:1,h:2, tier:3, cost:12,cd:3.5, atk:16, tags:["weapon"], fusion:true },
-  reiyaku:  { n:"霊薬の瓢箪", w:1,h:1, tier:3, cost:10,cd:4,   heal:12, fusion:true },
-  yata:     { n:"八咫鏡",     w:1,h:1, tier:3, cost:10,cd:4.5, blk:15, fusion:true },
+  itaten:   { n:"韋駄天草履",     w:1,h:1, tier:3, cost:9, cd:1.6, atk:3.5, tags:["weapon"], fusion:true },
+  yaminabe: { n:"闇鍋",           w:1,h:1, tier:3, cost:9, cd:3,   burn:4, psn:2, fusion:true },
+  ungaikyo: { n:"雲外鏡",         w:1,h:1, tier:3, cost:10,cd:4,   blk:15, fusion:true },
+  benzaiten:{ n:"弁財天の琵琶",   w:1,h:2, tier:3, cost:12,cd:4,   heal:14, fusion:true },
+  sumi:     { n:"妖刀・墨染",     w:1,h:2, tier:3, cost:12,cd:3,   atk:15, psn:2, tags:["weapon"], fusion:true },
 };
 for (const [id, d] of Object.entries(ITEMS)) { d.id = id; d.tags = d.tags || []; }
 const RECIPES = [
-  { a:"bakeneko", b:"chouchin",  r:"nekokasha" },
-  { a:"kitsunebi",b:"dokumanju", r:"onibi" },
-  { a:"hamaya",   b:"ofuda",     r:"taimaya" },
-  { a:"hyoutan",  b:"kappa",     r:"reiyaku" },
-  { a:"karakasa", b:"kagami",    r:"yata" },
+  { a:"zouri",    b:"geta",    r:"itaten" },
+  { a:"kama",     b:"tsubo",   r:"yaminabe" },
+  { a:"karakasa", b:"kagami",  r:"ungaikyo" },
+  { a:"hyoutan",  b:"biwa",    r:"benzaiten" },
+  { a:"katana",   b:"fude",    r:"sumi" },
 ];
 const findRecipe = (x, y) => RECIPES.find(r => (r.a === x && r.b === y) || (r.a === y && r.b === x));
 
 const HERO_DEFS = {
-  miko:    { n:"巫女",     hp:70, desc:"守りが得意な巫女",   start:[["ofuda",2,1],["karakasa",3,1]], cost:0 },
-  onmyoji: { n:"陰陽師",   hp:60, desc:"状態異常の使い手",   start:[["kitsunebi",2,1],["dokumanju",3,1]], cost:40 },
-  ronin:   { n:"浪人",     hp:80, desc:"刀一本で生きる男",   start:[["kodachi",2,1],["hyoutan",3,1]], cost:0 },
+  miko:    { n:"巫女",     hp:70, desc:"守りが得意な巫女",   start:[["zouri",2,1],["karakasa",3,1]], cost:0 },
+  onmyoji: { n:"陰陽師",   hp:60, desc:"状態異常の使い手",   start:[["kama",2,1],["tsubo",3,1]], cost:40 },
+  ronin:   { n:"浪人",     hp:80, desc:"刀一本で生きる男",   start:[["katana",2,1],["hyoutan",3,1]], cost:0 },
 };
 const STAGES = [
-  { n:"小鬼",       s:"e_oni",         hp:24,  it:[{atk:3,cd:3,ic:"ofuda"}] },
-  { n:"唐傘小僧",   s:"e_karakasa",    hp:32,  it:[{atk:3,cd:2.8,ic:"ofuda"},{blk:4,cd:5,ic:"karakasa"}] },
-  { n:"河童",       s:"e_kappa",       hp:42,  it:[{atk:4,cd:3,ic:"kodachi"},{heal:3,cd:5,ic:"hyoutan"}] },
-  { n:"赤鬼",       s:"e_oniBoss",     hp:80,  boss:1, it:[{atk:8,cd:3.5,ic:"kanabou"},{blk:6,cd:6,ic:"kagami"}] },
-  { n:"子狐",       s:"e_kitsune",     hp:70,  it:[{atk:4,cd:2.5,ic:"ofuda"},{burn:2,cd:5,ic:"kitsunebi"}] },
-  { n:"大唐傘",     s:"e_karakasaBig", hp:86,  it:[{atk:6,cd:3,ic:"kodachi"},{blk:8,cd:4,ic:"karakasa"}] },
-  { n:"河童の親分", s:"e_kappaBoss",   hp:100, it:[{atk:7,cd:3,ic:"kodachi"},{heal:5,cd:4,ic:"hyoutan"},{psn:2,cd:6,ic:"dokumanju"}] },
-  { n:"妖狐",       s:"e_kitsuneBoss", hp:170, boss:1, it:[{atk:9,cd:3,ic:"hamaya"},{burn:3,cd:4,ic:"kitsunebi"},{blk:8,cd:6,ic:"kagami"}] },
-  { n:"青鬼",       s:"e_oniBlue",     hp:140, it:[{atk:12,cd:3.5,ic:"kanabou"},{atk:5,cd:2,ic:"ofuda"}] },
-  { n:"大からかさ", s:"e_karakasaBig", hp:170, it:[{atk:9,cd:3,ic:"youtou"},{blk:12,cd:4,ic:"karakasa"},{heal:6,cd:5,ic:"hyoutan"}] },
-  { n:"化け河童",   s:"e_kappaBoss",   hp:190, it:[{atk:10,cd:2.8,ic:"youtou"},{psn:3,cd:4,ic:"dokumanju"},{heal:8,cd:5,ic:"hyoutan"}] },
-  { n:"がしゃどくろ",s:"e_gasha",      hp:320, boss:1, it:[{atk:14,cd:3.2,ic:"kanabou"},{atk:6,cd:1.8,ic:"ofuda"},{burn:4,cd:5,ic:"kitsunebi"},{blk:10,cd:5,ic:"kagami"}] },
+  { n:"小鬼",       s:"e_oni",         hp:24,  it:[{atk:3,cd:3,ic:"zouri"}] },
+  { n:"一つ目小僧", s:"e_karakasa",    hp:32,  it:[{atk:3,cd:2.8,ic:"zouri"},{blk:4,cd:5,ic:"karakasa"}] },
+  { n:"河童",       s:"e_kappa",       hp:42,  it:[{atk:4,cd:3,ic:"geta"},{heal:3,cd:5,ic:"hyoutan"}] },
+  { n:"赤鬼",       s:"e_oniBoss",     hp:80,  boss:1, it:[{atk:8,cd:3.5,ic:"kozuchi"},{blk:6,cd:6,ic:"kagami"}] },
+  { n:"子狐",       s:"e_kitsune",     hp:70,  it:[{atk:4,cd:2.5,ic:"zouri"},{burn:2,cd:5,ic:"kama"}] },
+  { n:"大入道",     s:"e_karakasaBig", hp:86,  it:[{atk:6,cd:3,ic:"katana"},{blk:8,cd:4,ic:"karakasa"}] },
+  { n:"河童の親分", s:"e_kappaBoss",   hp:100, it:[{atk:7,cd:3,ic:"katana"},{heal:5,cd:4,ic:"hyoutan"},{psn:2,cd:6,ic:"tsubo"}] },
+  { n:"妖狐",       s:"e_kitsuneBoss", hp:170, boss:1, it:[{atk:9,cd:3,ic:"geta"},{burn:3,cd:4,ic:"kama"},{blk:8,cd:6,ic:"kagami"}] },
+  { n:"青鬼",       s:"e_oniBlue",     hp:140, it:[{atk:12,cd:3.5,ic:"kozuchi"},{atk:5,cd:2,ic:"zouri"}] },
+  { n:"大入道",     s:"e_karakasaBig", hp:170, it:[{atk:9,cd:3,ic:"sumi"},{blk:12,cd:4,ic:"karakasa"},{heal:6,cd:5,ic:"hyoutan"}] },
+  { n:"化け河童",   s:"e_kappaBoss",   hp:190, it:[{atk:10,cd:2.8,ic:"sumi"},{psn:3,cd:4,ic:"tsubo"},{heal:8,cd:5,ic:"hyoutan"}] },
+  { n:"がしゃどくろ",s:"e_gasha",      hp:320, boss:1, it:[{atk:14,cd:3.2,ic:"kozuchi"},{atk:6,cd:1.8,ic:"zouri"},{burn:4,cd:5,ic:"kama"},{blk:10,cd:5,ic:"kagami"}] },
 ];
-const TUNE = { hp: 1.6, dmg: 0.8 }; // 後半ほど強くなる係数
+const TUNE = { hp: 2.2, dmg: 1.0 }; // 後半ほど強くなる係数
 const scaleHp = st => 1 + (st - 1) / 11 * TUNE.hp;
 const scaleDmg = st => 1 + (st - 1) / 11 * TUNE.dmg;
 const R = n => Math.round(n * 10) / 10;
@@ -91,7 +91,7 @@ function itemDesc(def, star = 1) {
   if (def.psn) p.push(`どく${R(def.psn * m)}`);
   let s = def.cd ? `${def.cd}秒ごと: ` + p.join("・") : "";
   if (def.aura) {
-    if (def.aura.atk) s = `隣の武器の攻撃+${R(def.aura.atk * m)}`;
+    if (def.aura.atk) s = `隣の武器の攻撃力 +${R(def.aura.atk * m)}`;
     if (def.aura.cdMul) s = `隣のアイテムが${Math.round((1 - def.aura.cdMul) * 100)}%早く動く`;
   }
   return s;
@@ -108,6 +108,7 @@ function blit(s, x, y, o = {}) {
   ctx.drawImage(o.white ? s.w : s.c, Math.round(x), Math.round(y), w, h);
   ctx.restore();
 }
+const iconFit = id => { const q = spr(id); return q.W <= 40 && q.H <= 40 ? 1 : 0.5; };
 function blitC(key, cx, cy, o = {}) { const s = spr(key), sc = o.scale || 1; blit(s, cx - s.W * sc / 2, cy - s.H * sc / 2, o); }
 function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
 function txt(s, x, y, o = {}) {
@@ -273,7 +274,7 @@ function tapGrid(gx, gy) {
 }
 function heldSellValue() { const h = run.held; return h.from === "shop" ? h.cost : Math.max(1, Math.floor(ITEMS[h.id].cost * (h.star === 1 ? 1 : h.star === 2 ? 2.2 : 4) / 2)); }
 function sellHeld() { if (!run.held) return; run.gold += heldSellValue(); run.held = null; sfx("buy"); }
-function rotateHeld() { if (run.held) { const d = ITEMS[run.held.id]; if (d.w !== d.h) run.held.rot = !run.held.rot; } }
+function rotateHeld() {}
 function reroll() {
   const c = 1 + run.rerolls;
   if (run.gold < c) { sfx("err"); return say("お金が足りない"); }
@@ -420,19 +421,15 @@ function drawChar(s, t) {
   const bob = Math.round(Math.sin(t * 3 + (s.kind === "hero" ? 0 : 1.5)) * 1) * 2;
   const dir = s.kind === "hero" ? 1 : -1;
   const lunge = s.lunge > 0 ? Math.sin((s.lunge / 0.22) * Math.PI) * 18 * dir : 0;
-  const sp = spr(s.spr), sc = s.boss ? 2 : 2;
+  const sp = spr(s.spr), sc = 1;
   const w = sp.W * sc, h = sp.H * sc;
   let ox = lunge, oy = bob, alpha = 1;
   if (s.dead) { alpha = clamp(1 - s.dead / 0.8, 0, 1); oy += s.dead * 30; }
-  const x = s.x - w / 2 + ox, y = s.y - h + 4 + oy;
+  const x = s.x - w / 2 + ox, y = s.y - h + 8 + oy;
   // 影
-  ctx.globalAlpha = 0.35; rect(s.x - 30, s.y - 4, 60, 6, "#000"); ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.35; rect(s.x - 36, s.y - 4, 72, 6, "#000"); ctx.globalAlpha = 1;
   blit(sp, x, y, { scale: sc, alpha });
   if (s.hit > 0 && !s.dead) blit(sp, x, y, { scale: sc, white: true, alpha: 0.85 });
-  if (s.kind === "hero") {
-    const pr = spr("prop_" + s.spr);
-    blit(pr, s.x + 34 + lunge * 0.6, s.y - 64 + oy - (s.lunge > 0 ? 6 : 0), { scale: 2 });
-  }
 }
 function drawBars(s, y) {
   const w = 132, x = s.x - w / 2;
@@ -455,7 +452,7 @@ function drawFXLayer(t) {
   for (const r of FX.rings) { const rr = 10 + r.t / 0.35 * 34; ctx.globalAlpha = 1 - r.t / 0.35; for (let a = 0; a < 6.283; a += 0.22) rect(r.x + Math.cos(a) * rr, r.y + Math.sin(a) * rr, 4, 4, r.col); ctx.globalAlpha = 1; }
   for (const p of FX.projs) {
     const f = p.t / p.dur, x = p.x0 + (p.x1 - p.x0) * f, y = p.y0 + (p.y1 - p.y0) * f - Math.sin(Math.PI * f) * 24;
-    blitC(p.icon, x, y, { scale: 1.5 });
+    blitC(p.icon, x, y, { scale: iconFit(p.icon) });
   }
   for (const s of FX.slashes) {
     const f = s.t / 0.2, n = Math.floor(f * 8) + 1;
@@ -470,10 +467,9 @@ function drawItemTile(id, star, x, y, w, h, o = {}) {
   rect(x, y, pw, ph, "#0d0818");
   rect(x + 1, y + 1, pw - 2, ph - 2, TIERCOL[d.tier]);
   rect(x + 2, y + 2, pw - 4, ph - 4, o.bad ? "#5a2030" : o.good ? "#27503a" : "#2e2552");
-  const big = w >= 2 && h >= 2;
-  blitC(id, x + pw / 2, y + ph / 2, { scale: big ? 2 : 1, alpha: o.alpha ?? 1 });
+  blitC(id, x + pw / 2, y + ph / 2, { alpha: o.alpha ?? 1 });
   if (star > 1) for (let i = 0; i < star - 1; i++) blit(spr("star"), x + pw - 16 - i * 12, y + ph - 16);
-  if (o.buff) rect(x + 3, y + 3, 4, 4, "#7ede5a");
+  if (o.buff) rect(x + 4, y + 4, 4, 4, "#7ede5a");
 }
 function drawGridBase() {
   panel(8, GY - 10, 344, GH * CELL + 20);
@@ -503,11 +499,11 @@ function drawRun(dt) {
   drawFXLayer(t);
   ctx.restore();
   // 名前
-  txt(HERO_DEFS[run.hero].n, 90, 52, { size: 14, align: "center", outline: "#000" });
-  txt(sd.name || sd.n, 270, 52, { size: 14, align: "center", outline: "#000", color: sd.boss ? "#ff9d9d" : "#fff" });
-  drawBars(heroS, 214); drawBars(enS, 214);
-  if (b) for (let i = 0; i < enS.items.length; i++) { const it = enS.items[i]; const f = clamp(it.t / (it.cd * it.cdMul), 0, 1); rect(270 - 66 + i * 34, 240, 30, 4, "#0d0818"); rect(270 - 66 + i * 34 + 1, 241, Math.round(28 * f), 2, it.atk ? "#ffd84d" : it.blk ? "#7fb7ff" : it.heal ? "#7ede5a" : "#c06bff"); }
-  else for (let i = 0; i < sd.it.length; i++) { const o = sd.it[i]; blitC(o.ic, 270 - 50 + i * 34, 242, { scale: 1, alpha: 0.9 }); }
+  txt(HERO_DEFS[run.hero].n, 90, 207, { size: 12, align: "center", outline: "#000" });
+  txt(sd.n, 270, 207, { size: 12, align: "center", outline: "#000", color: sd.boss ? "#ff9d9d" : "#fff" });
+  drawBars(heroS, 217); drawBars(enS, 217);
+  if (b) for (let i = 0; i < enS.items.length; i++) { const it = enS.items[i]; const f = clamp(it.t / (it.cd * it.cdMul), 0, 1); rect(270 - 66 + i * 34, 245, 30, 4, "#0d0818"); rect(270 - 66 + i * 34 + 1, 246, Math.round(28 * f), 2, it.atk ? "#ffd84d" : it.blk ? "#7fb7ff" : it.heal ? "#7ede5a" : "#c06bff"); }
+  else for (let i = 0; i < sd.it.length; i++) { const o = sd.it[i]; blitC(o.ic, 270 - 40 + i * 30, 244, { scale: 0.5, alpha: 0.95 }); }
   drawRunHeader();
 
   // バックパック
@@ -538,14 +534,14 @@ function drawRun(dt) {
     }
   }
   // 右カラム
-  const rx = GX + GW * CELL + 6;
+  const rx = GX + GW * CELL + 10;
   if (!b && run.phase === "shop") {
-    txt("持ち物", rx + 22, GY + 6, { size: 12, align: "center", color: "#b9a8f0" });
-    rect(rx, GY + 16, 46, 46, "#120b26");
-    if (run.held) { const hd = ITEMS[run.held.id]; blitC(run.held.id, rx + 23, GY + 39, { scale: 1 }); if (run.held.star > 1) txt("★" + run.held.star, rx + 23, GY + 56, { size: 10, align: "center", color: "#ffd84d" }); }
-    button(rx, GY + 68, 46, 24, "回転", rotateHeld, { size: 12, disabled: !run.held, fill: "#2a4d7a", edge: "#4a7be8", hot: "#3a6aa8" });
-    button(rx, GY + 98, 46, 40, run.held ? (run.held.from === "shop" ? "戻す" : "売る") : "売る", sellHeld, { size: 12, disabled: !run.held, fill: "#5a2030", edge: "#e0463f", hot: "#8a3040" });
-    if (run.held) txt("+" + heldSellValue(), rx + 23, GY + 150, { size: 12, align: "center", color: "#ffd84d" });
+    txt("持ち物", rx + 33, GY + 6, { size: 12, align: "center", color: "#b9a8f0" });
+    rect(rx, GY + 16, 66, 80, "#120b26");
+    if (run.held) { blitC(run.held.id, rx + 33, GY + 56, { scale: 1 }); if (run.held.star > 1) txt("★" + run.held.star, rx + 33, GY + 88, { size: 10, align: "center", color: "#ffd84d" }); }
+    else txt("空", rx + 33, GY + 56, { size: 12, align: "center", color: "#443a70" });
+    button(rx, GY + 104, 62, 40, run.held ? (run.held.from === "shop" ? "戻す" : "売る") : "売る", sellHeld, { size: 14, disabled: !run.held, fill: "#5a2030", edge: "#e0463f", hot: "#8a3040" });
+    if (run.held) txt("+" + heldSellValue() + " 小判", rx + 33, GY + 158, { size: 12, align: "center", color: "#ffd84d" });
   }
 
   // 情報パネル
@@ -578,16 +574,16 @@ function drawRun(dt) {
   // ショップ / ボタン
   if (!b && run.phase === "shop") {
     for (let i = 0; i < 4; i++) {
-      const x = 10 + i * 86, y = infoY + 54, s = run.shop[i];
-      panel(x, y, 82, 62, { fill: run.sel === i ? "#3a2f6a" : "#241a46", edge: run.sel === i ? "#ffd84d" : "#5a4a9c" });
-      if (s) {
-        const d = ITEMS[s.id];
-        blitC(s.id, x + 41, y + 26, { scale: d.w * d.h >= 4 ? 2 : 1 });
-        blit(spr("coin"), x + 26, y + 46); txt(String(d.cost), x + 44, y + 53, { size: 12, color: run.gold >= d.cost ? "#ffd84d" : "#ff6b6b" });
-        tap(x, y, 82, 62, () => tapShop(i));
-      } else txt("SOLD", x + 41, y + 31, { size: 12, align: "center", color: "#554" });
+      const x = 10 + i * 86, y = infoY + 54, sl = run.shop[i];
+      panel(x, y, 82, 84, { fill: run.sel === i ? "#3a2f6a" : "#241a46", edge: run.sel === i ? "#ffd84d" : "#5a4a9c" });
+      if (sl) {
+        const d = ITEMS[sl.id];
+        blitC(sl.id, x + 41, y + 38, { scale: 1 });
+        blit(spr("coin"), x + 26, y + 73); txt(String(d.cost), x + 44, y + 77, { size: 12, color: run.gold >= d.cost ? "#ffd84d" : "#ff6b6b" });
+        tap(x, y, 82, 84, () => tapShop(i));
+      } else txt("SOLD", x + 41, y + 42, { size: 12, align: "center", color: "#554" });
     }
-    const by = infoY + 54 + 62 + 8;
+    const by = infoY + 54 + 84 + 6;
     button(10, by, 100, 26, `リロール ${1 + run.rerolls}`, reroll, { size: 12, fill: "#2a4d7a", edge: "#4a7be8", hot: "#3a6aa8" });
     button(120, by, 230, 26, "戦闘開始!", startBattle, { size: 16 });
   }
@@ -607,7 +603,7 @@ function drawRun(dt) {
 function drawRunEnd() {
   ctx.globalAlpha = 0.85; rect(0, 0, W, H, "#000"); ctx.globalAlpha = 1;
   txt(run.victory ? "百鬼夜行を制した!" : "力尽きた…", W / 2, 140, { size: 26, align: "center", color: run.victory ? "#ffd84d" : "#ff6b6b" });
-  blitC(run.hero, W / 2, 250, { scale: 3 });
+  blitC(run.hero, W / 2, 250, { scale: 1 });
   txt(`到達: ${Math.min(run.stage, 12)} / 12`, W / 2, 340, { size: 16, align: "center" });
   txt(`獲得コイン  +${run.coins}`, W / 2, 372, { size: 16, align: "center", color: "#ffd84d" });
   txt(`所持コイン ${save.coins}`, W / 2, 400, { size: 14, align: "center", color: "#b9a8f0" });
@@ -622,7 +618,7 @@ function drawTitle(dt) {
   rect(0, 250, W, H - 250, "#120b26");
   for (let i = 0; i < 6; i++) rect(0, 250 + i * 2, W, 2, ["#2a1f4d", "#251b47", "#201740", "#1a1236", "#150e2e", "#120b26"][i]);
   const hs = ["miko", "onmyoji", "ronin"];
-  hs.forEach((h, i) => { const s = spr(h); blit(s, 60 + i * 100 - s.W, 218 - s.H * 2 + 4 + Math.round(Math.sin(t * 3 + i) * 1) * 2, { scale: 2 }); });
+  hs.forEach((h, i) => { const s = spr(h); blit(s, 60 + i * 120 - s.W / 2, 214 - s.H + 8 + Math.round(Math.sin(t * 3 + i) * 1) * 2); });
   txt("百鬼夜行", W / 2, 44, { size: 40, align: "center", color: "#ffd84d", outline: "#52308f" });
   txt("パ ッ ク", W / 2, 84, { size: 26, align: "center", color: "#ff93b8", outline: "#52308f" });
   blit(spr("coin"), 12, 262); txt(String(save.coins), 30, 270, { size: 14, color: "#ffd84d" });
@@ -641,17 +637,17 @@ function drawHeroSel() {
   txt("ヒーローを選ぼう", W / 2, 24, { size: 18, align: "center" });
   const hs = Object.keys(HERO_DEFS);
   hs.forEach((id, i) => {
-    const hd = HERO_DEFS[id], x = 10 + i * 116, y = 270, open = save.unlocked[id];
-    panel(x, y, 110, 250, { fill: open ? "#241a46" : "#1a1630" });
-    blitC(id, x + 55, y + 70, { scale: 2, alpha: open ? 1 : 0.35 });
-    txt(hd.n, x + 55, y + 130, { size: 16, align: "center" });
-    txt(`HP ${hd.hp}`, x + 55, y + 152, { size: 12, align: "center", color: "#ff8a7a" });
-    wrap(hd.desc, 96).forEach((l, k) => txt(l, x + 55, y + 172 + k * 14, { size: 12, align: "center", color: "#b9a8f0" }));
-    hd.start.forEach(([iid], k) => blitC(iid, x + 35 + k * 40, y + 204, { scale: 0.75 }));
-    if (open) tap(x, y, 110, 250, () => startRun(id));
-    else button(x + 10, y + 222, 90, 22, `${hd.cost}コイン`, () => { if (save.coins >= hd.cost) { save.coins -= hd.cost; save.unlocked[id] = 1; persist(); sfx("buy"); } else sfx("err"); }, { size: 12, disabled: save.coins < hd.cost });
+    const hd = HERO_DEFS[id], x = 10 + i * 116, y = 262, open = save.unlocked[id];
+    panel(x, y, 110, 290, { fill: open ? "#241a46" : "#1a1630" });
+    blitC(id, x + 55, y + 74, { alpha: open ? 1 : 0.35 });
+    txt(hd.n, x + 55, y + 156, { size: 16, align: "center" });
+    txt(`HP ${hd.hp}`, x + 55, y + 176, { size: 12, align: "center", color: "#ff8a7a" });
+    wrap(hd.desc, 96).forEach((l, k) => txt(l, x + 55, y + 196 + k * 14, { size: 12, align: "center", color: "#b9a8f0" }));
+    hd.start.forEach(([iid], k) => blitC(iid, x + 33 + k * 44, y + 238, { scale: iconFit(iid) }));
+    if (open) tap(x, y, 110, 290, () => startRun(id));
+    else button(x + 10, y + 264, 90, 20, `${hd.cost}コイン`, () => { if (save.coins >= hd.cost) { save.coins -= hd.cost; save.unlocked[id] = 1; persist(); sfx("buy"); } else sfx("err"); }, { size: 12, disabled: save.coins < hd.cost });
   });
-  button(130, 560, 100, 32, "戻る", () => setScene("title"), { size: 14, fill: "#2a1f4d", edge: "#7a5bd6" });
+  button(130, 580, 100, 32, "戻る", () => setScene("title"), { size: 14, fill: "#2a1f4d", edge: "#7a5bd6" });
 }
 function drawCodex() {
   rect(0, 0, W, H, "#120b26");
@@ -661,23 +657,23 @@ function drawCodex() {
   all.forEach((id, i) => {
     const x = 16 + (i % 8) * 42, y = 70 + Math.floor(i / 8) * 42, d = ITEMS[id], k = save.seenItems[id];
     rect(x, y, 38, 38, "#0d0818"); rect(x + 1, y + 1, 36, 36, k ? TIERCOL[d.tier] : "#333"); rect(x + 2, y + 2, 34, 34, "#2e2552");
-    if (k) blitC(id, x + 19, y + 19, { scale: 1 }); else txt("?", x + 19, y + 20, { size: 16, align: "center", color: "#555" });
+    if (k) blitC(id, x + 19, y + 19, { scale: iconFit(id) }); else txt("?", x + 19, y + 20, { size: 16, align: "center", color: "#555" });
     tap(x, y, 38, 38, () => { codexSel = id; });
   });
-  panel(10, 190, 340, 74);
+  panel(10, 202, 340, 74);
   if (codexSel && save.seenItems[codexSel]) {
-    const d = ITEMS[codexSel]; txt(d.n, 18, 206, { size: 14 }); txt(`${d.w}x${d.h}  ★${d.tier}`, 342, 206, { size: 12, align: "right", color: "#8c80b8" });
-    wrap(itemDesc(d), 320).slice(0, 2).forEach((l, i) => txt(l, 18, 226 + i * 14, { size: 12, color: "#ddd" }));
-    if (d.fusion) txt("合体専用アイテム", 18, 254, { size: 10, color: "#ffb0d0" });
-  } else txt("アイテムを選ぶと詳細が見られる", 180, 227, { size: 12, align: "center", color: "#8c80b8" });
-  txt("合体レシピ", 18, 290, { size: 14, color: "#ffb0d0" });
+    const d = ITEMS[codexSel]; txt(d.n, 18, 218, { size: 14 }); txt(`${d.w}x${d.h}  ★${d.tier}`, 342, 218, { size: 12, align: "right", color: "#8c80b8" });
+    wrap(itemDesc(d), 320).slice(0, 2).forEach((l, i) => txt(l, 18, 238 + i * 14, { size: 12, color: "#ddd" }));
+    if (d.fusion) txt("合体専用アイテム", 18, 266, { size: 10, color: "#ffb0d0" });
+  } else txt("アイテムを選ぶと詳細が見られる", 180, 239, { size: 12, align: "center", color: "#8c80b8" });
+  txt("合体レシピ", 18, 296, { size: 14, color: "#ffb0d0" });
   RECIPES.forEach((r, i) => {
-    const y = 310 + i * 44, k = save.seenRecipes[r.r];
-    panel(10, y, 340, 38, { fill: "#1d1540" });
-    blitC(r.a, 36, y + 19, { scale: 1 }); txt("+", 66, y + 20, { size: 16, align: "center" }); blitC(r.b, 96, y + 19, { scale: 1 }); txt("→", 130, y + 20, { size: 16, align: "center" });
-    if (k) { blitC(r.r, 164, y + 19, { scale: 1 }); txt(ITEMS[r.r].n, 190, y + 20, { size: 14 }); } else txt("？？？", 164, y + 20, { size: 14, color: "#666" });
+    const y = 312 + i * 48, k = save.seenRecipes[r.r];
+    panel(10, y, 340, 42, { fill: "#1d1540" });
+    blitC(r.a, 36, y + 21, { scale: iconFit(r.a) }); txt("+", 66, y + 22, { size: 16, align: "center" }); blitC(r.b, 96, y + 21, { scale: iconFit(r.b) }); txt("→", 130, y + 22, { size: 16, align: "center" });
+    if (k) { blitC(r.r, 164, y + 21, { scale: iconFit(r.r) }); txt(ITEMS[r.r].n, 190, y + 22, { size: 14 }); } else txt("？？？", 164, y + 20, { size: 14, color: "#666" });
   });
-  button(130, 560, 100, 32, "戻る", () => setScene("title"), { size: 14, fill: "#2a1f4d", edge: "#7a5bd6" });
+  button(130, 596, 100, 32, "戻る", () => setScene("title"), { size: 14, fill: "#2a1f4d", edge: "#7a5bd6" });
 }
 
 // ---------- メインループ ----------
@@ -707,5 +703,4 @@ cv.addEventListener("pointerdown", e => {
   mouse = toLogical(e);
   for (let i = ui.length - 1; i >= 0; i--) { const u = ui[i]; if (u.fn && mouse.x >= u.x && mouse.x < u.x + u.w && mouse.y >= u.y && mouse.y < u.y + u.h) { u.fn(); break; } }
 });
-addEventListener("keydown", e => { if (scene === "run" && run && e.key.toLowerCase() === "r") rotateHeld(); });
 requestAnimationFrame(frame);
