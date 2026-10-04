@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>ニワトリ・サバイバー</title>
+<style>
+  html,body{margin:0;height:100%;background:#1b1b2a;color:#fff;font-family:system-ui,"Hiragino Sans","Noto Sans JP",sans-serif;overflow:hidden;touch-action:none}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{background:#2c3e2f;max-width:100vw;max-height:100vh;touch-action:none}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c" width="800" height="600"></canvas></div>
+<script>
+"use strict";
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---------- 永続データ(メタ進行) ----------
+const SAVE_KEY = "chicken-survivor-v1";
+let save = { coins: 0, best: 0, up: { hp: 0, dmg: 0, spd: 0 } };
+try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}); } catch (e) {}
+const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} };
+const META = [
+  { id: "hp",  name: "たくましい足", desc: "最大HP +20", base: 10 },
+  { id: "dmg", name: "とがったくちばし", desc: "ダメージ +15%", base: 15 },
+  { id: "spd", name: "ひよこの靴", desc: "移動速度 +8%", base: 12 },
+];
+const metaCost = m => m.base * (1 + save.up[m.id]);
+
+// ---------- 入力 ----------
+const keys = {};
+addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; onKey(e.key.toLowerCase()); });
+addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+let touch = null; // {x0,y0,x,y}
+const toCanvas = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; };
+cv.addEventListener("pointerdown", e => { const p = toCanvas(e); touch = { x0: p.x, y0: p.y, x: p.x, y: p.y }; onClick(p); });
+cv.addEventListener("pointermove", e => { if (touch) { const p = toCanvas(e); touch.x = p.x; touch.y = p.y; } });
+addEventListener("pointerup", () => { touch = null; });
+
+// ---------- ゲーム状態 ----------
+let state = "title"; // title | play | levelup | dead
+let g, choices = [], buttons = [];
+
+const UPGRADES = [
+  { name: "たまごマシンガン", desc: "連射速度 +20%", apply: g => g.fireRate *= 1.2 },
+  { name: "ビッグたまご",     desc: "ダメージ +25%", apply: g => g.dmg *= 1.25 },
+  { name: "ダブルたまご",     desc: "弾が +1 発", apply: g => g.shots += 1 },
+  { name: "かたいカラ",       desc: "貫通 +1", apply: g => g.pierce += 1 },
+  { name: "ダッシュ羽根",     desc: "移動速度 +12%", apply: g => g.speed *= 1.12 },
+  { name: "ごはんの時間",     desc: "最大HP +25 & 全回復", apply: g => { g.maxHp += 25; g.hp = g.maxHp; } },
+  { name: "でっかい磁石",     desc: "拾う範囲 +40%", apply: g => g.magnet *= 1.4 },
+  { name: "フライパン",       desc: "回転するフライパン +1", apply: g => g.pans += 1 },
+  { name: "ひなたぼっこ",     desc: "HPが毎秒 +1 回復", apply: g => g.regen += 1 },
+];
+
+function newGame() {
+  g = {
+    t: 0, kills: 0, level: 1, xp: 0, xpNext: 5,
+    x: W / 2, y: H / 2, face: 1,
+    maxHp: 100 + save.up.hp * 20, hp: 0,
+    dmg: 10 * (1 + save.up.dmg * 0.15), speed: 150 * (1 + save.up.spd * 0.08),
+    fireRate: 1.6, shots: 1, pierce: 0, magnet: 60, pans: 0, regen: 0,
+    fireCd: 0, spawnCd: 0, panAngle: 0, hurtCd: 0,
+    enemies: [], bullets: [], gems: [], texts: [], parts: [],
+  };
+  g.hp = g.maxHp;
+}
+
+const ENEMY_TYPES = [
+  { e: "🍞", hp: 20, spd: 45, dmg: 8,  size: 16, xp: 1, from: 0 },
+  { e: "🧦", hp: 12, spd: 85, dmg: 6,  size: 14, xp: 1, from: 30 },
+  { e: "🐟", hp: 70, spd: 38, dmg: 14, size: 20, xp: 3, from: 60 },
+  { e: "🥦", hp: 400, spd: 40, dmg: 25, size: 34, xp: 20, from: 90, boss: true },
+];
+
+function spawnEnemy() {
+  const avail = ENEMY_TYPES.filter(t => g.t >= t.from && !t.boss);
+  let type = pick(avail);
+  // 90秒以降、20秒ごとにボス
+  if (g.t >= 90 && g.t - (g.lastBoss ?? 70) >= 20) { type = ENEMY_TYPES[3]; g.lastBoss = g.t; }
+  const side = Math.floor(Math.random() * 4), m = 30;
+  const x = side === 0 ? -m : side === 1 ? W + m : rand(0, W);
+  const y = side === 2 ? -m : side === 3 ? H + m : rand(0, H);
+  const scale = 1 + g.t / 90; // 時間とともに強くなる
+  g.enemies.push({ ...type, x, y, hp: type.hp * scale, maxHp: type.hp * scale, flash: 0 });
+}
+
+function say(x, y, s, col = "#fff") { g.texts.push({ x, y, s, col, life: 0.7 }); }
+function burst(x, y, n, col) {
+  for (let i = 0; i < n; i++) { const a = rand(0, 6.28), v = rand(30, 120); g.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rand(.2, .5), col }); }
+}
+
+function hitEnemy(en, dmg) {
+  en.hp -= dmg; en.flash = 0.08;
+  say(en.x, en.y - en.size, Math.round(dmg));
+  if (en.hp <= 0 && !en.dead) {
+    en.dead = true; g.kills++;
+    g.gems.push({ x: en.x, y: en.y, v: en.xp });
+    burst(en.x, en.y, 8, "#ffd54f");
+  }
+}
+
+function update(dt) {
+  g.t += dt;
+  // 移動
+  let dx = (keys["d"] || keys["arrowright"] ? 1 : 0) - (keys["a"] || keys["arrowleft"] ? 1 : 0);
+  let dy = (keys["s"] || keys["arrowdown"] ? 1 : 0) - (keys["w"] || keys["arrowup"] ? 1 : 0);
+  if (touch) { const tx = touch.x - touch.x0, ty = touch.y - touch.y0, d = Math.hypot(tx, ty); if (d > 8) { dx = tx / d; dy = ty / d; } }
+  const l = Math.hypot(dx, dy);
+  if (l > 0) { dx /= l; dy /= l; g.x += dx * g.speed * dt; g.y += dy * g.speed * dt; if (dx) g.face = dx > 0 ? 1 : -1; }
+  g.x = Math.max(16, Math.min(W - 16, g.x)); g.y = Math.max(16, Math.min(H - 16, g.y));
+
+  if (g.regen) g.hp = Math.min(g.maxHp, g.hp + g.regen * dt);
+  g.hurtCd = Math.max(0, g.hurtCd - dt);
+
+  // スポーン(時間で加速)
+  g.spawnCd -= dt;
+  if (g.spawnCd <= 0) { spawnEnemy(); g.spawnCd = Math.max(0.12, 1.2 - g.t / 100); }
+
+  // 自動射撃
+  g.fireCd -= dt;
+  if (g.fireCd <= 0 && g.enemies.length) {
+    let best = null, bd = 1e9;
+    for (const en of g.enemies) { const d = (en.x - g.x) ** 2 + (en.y - g.y) ** 2; if (d < bd) { bd = d; best = en; } }
+    const base = Math.atan2(best.y - g.y, best.x - g.x);
+    for (let i = 0; i < g.shots; i++) {
+      const a = base + (i - (g.shots - 1) / 2) * 0.2;
+      g.bullets.push({ x: g.x, y: g.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, pierce: g.pierce, life: 1.5, hit: new Set() });
+    }
+    g.fireCd = 1 / g.fireRate;
+  }
+
+  // 弾
+  for (const b of g.bullets) {
+    b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+    for (const en of g.enemies) {
+      if (en.dead || b.hit.has(en) || b.life <= 0) continue;
+      if (Math.hypot(en.x - b.x, en.y - b.y) < en.size + 5) {
+        b.hit.add(en); hitEnemy(en, g.dmg);
+        if (b.pierce-- <= 0) b.life = 0;
+      }
+    }
+  }
+  g.bullets = g.bullets.filter(b => b.life > 0);
+
+  // フライパン
+  g.panAngle += dt * 3;
+  for (let i = 0; i < g.pans; i++) {
+    const a = g.panAngle + i * 6.283 / g.pans, px = g.x + Math.cos(a) * 55, py = g.y + Math.sin(a) * 55;
+    for (const en of g.enemies) {
+      if (en.dead) continue;
+      if (Math.hypot(en.x - px, en.y - py) < en.size + 12) {
+        en.pan = en.pan || 0;
+        if (g.t - en.pan > 0.4) { en.pan = g.t; hitEnemy(en, g.dmg * 0.8); }
+      }
+    }
+  }
+
+  // 敵
+  for (const en of g.enemies) {
+    const a = Math.atan2(g.y - en.y, g.x - en.x);
+    en.x += Math.cos(a) * en.spd * dt; en.y += Math.sin(a) * en.spd * dt;
+    en.flash = Math.max(0, en.flash - dt);
+    if (!en.dead && g.hurtCd <= 0 && Math.hypot(en.x - g.x, en.y - g.y) < en.size + 12) {
+      g.hp -= en.dmg; g.hurtCd = 0.8; say(g.x, g.y - 20, "-" + en.dmg, "#ff6b6b"); burst(g.x, g.y, 6, "#ff6b6b");
+      if (g.hp <= 0) return die();
+    }
+  }
+  g.enemies = g.enemies.filter(e => !e.dead);
+
+  // 経験値
+  for (const gem of g.gems) {
+    const d = Math.hypot(g.x - gem.x, g.y - gem.y);
+    if (d < g.magnet) { gem.x += (g.x - gem.x) / d * 260 * dt; gem.y += (g.y - gem.y) / d * 260 * dt; }
+    if (d < 14) { gem.got = true; g.xp += gem.v; }
+  }
+  g.gems = g.gems.filter(x => !x.got);
+  if (g.xp >= g.xpNext) { g.xp -= g.xpNext; g.level++; g.xpNext = Math.floor(g.xpNext * 1.35 + 2); openLevelUp(); }
+
+  for (const t of g.texts) { t.y -= 30 * dt; t.life -= dt; }
+  g.texts = g.texts.filter(t => t.life > 0);
+  for (const p of g.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+  g.parts = g.parts.filter(p => p.life > 0);
+}
+
+function openLevelUp() {
+  const pool = [...UPGRADES].sort(() => Math.random() - 0.5);
+  choices = pool.slice(0, 3);
+  buttons = choices.map((c, i) => ({ x: 70 + i * 230, y: 200, w: 210, h: 200, c }));
+  state = "levelup";
+}
+
+const DEATH_MSGS = ["パンに負けた…", "靴下に踏まれた…", "ブロッコリーは苦手だった…", "今夜は唐揚げになった…", "卵だけが残った…"];
+function die() {
+  state = "dead";
+  g.coinsEarned = Math.floor(g.kills / 3 + g.t / 10);
+  g.msg = pick(DEATH_MSGS);
+  g.newBest = g.t > save.best;
+  save.coins += g.coinsEarned; save.best = Math.max(save.best, g.t);
+  persist();
+}
+
+// ---------- 入力ハンドラ ----------
+function startRun() { newGame(); state = "play"; }
+function onKey(k) {
+  if (state === "title" && (k === " " || k === "enter")) startRun();
+  else if (state === "dead" && (k === " " || k === "enter")) state = "title";
+  else if (state === "levelup" && ["1", "2", "3"].includes(k)) choose(+k - 1);
+  else if (state === "title" && ["1", "2", "3"].includes(k)) buyMeta(+k - 1);
+}
+function choose(i) { if (choices[i]) { choices[i].apply(g); state = "play"; } }
+function buyMeta(i) {
+  const m = META[i], c = metaCost(m);
+  if (save.coins >= c) { save.coins -= c; save.up[m.id]++; persist(); }
+}
+const inRect = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+const titleButtons = () => META.map((m, i) => ({ x: 60, y: 250 + i * 70, w: 680, h: 58 }));
+const startBtn = { x: 250, y: 500, w: 300, h: 60 };
+function onClick(p) {
+  if (state === "title") {
+    titleButtons().forEach((r, i) => { if (inRect(p, r)) buyMeta(i); });
+    if (inRect(p, startBtn)) startRun();
+  } else if (state === "levelup") {
+    buttons.forEach((b, i) => { if (inRect(p, b)) choose(i); });
+  } else if (state === "dead") state = "title";
+}
+
+// ---------- 描画 ----------
+function text(s, x, y, size = 20, col = "#fff", align = "center") {
+  ctx.font = `bold ${size}px system-ui,"Hiragino Sans","Noto Sans JP",sans-serif`;
+  ctx.fillStyle = col; ctx.textAlign = align; ctx.textBaseline = "middle"; ctx.fillText(s, x, y);
+}
+function emoji(e, x, y, size, flip = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(flip, 1);
+  ctx.font = `${size}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(e, 0, 0); ctx.restore();
+}
+function box(r, col = "#3a3a55", stroke = "#8c8cc0") {
+  ctx.fillStyle = col; ctx.strokeStyle = stroke; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(r.x, r.y, r.w, r.h, 12); ctx.fill(); ctx.stroke();
+}
+const fmtTime = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+
+function drawWorld() {
+  ctx.fillStyle = "#2c3e2f"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(255,255,255,.04)";
+  for (let x = 0; x < W; x += 40) for (let y = 0; y < H; y += 40) if ((x + y) / 40 % 2 === 0) ctx.fillRect(x, y, 40, 40);
+  for (const gem of g.gems) { ctx.fillStyle = "#4fc3f7"; ctx.beginPath(); ctx.arc(gem.x, gem.y, 5, 0, 7); ctx.fill(); }
+  for (const en of g.enemies) {
+    ctx.globalAlpha = en.flash > 0 ? 0.5 : 1;
+    emoji(en.e, en.x, en.y, en.size * 2);
+    ctx.globalAlpha = 1;
+    if (en.boss) { ctx.fillStyle = "#400"; ctx.fillRect(en.x - 25, en.y - en.size - 10, 50, 5); ctx.fillStyle = "#f44"; ctx.fillRect(en.x - 25, en.y - en.size - 10, 50 * en.hp / en.maxHp, 5); }
+  }
+  for (const b of g.bullets) emoji("🥚", b.x, b.y, 14);
+  for (let i = 0; i < g.pans; i++) { const a = g.panAngle + i * 6.283 / g.pans; emoji("🍳", g.x + Math.cos(a) * 55, g.y + Math.sin(a) * 55, 24); }
+  ctx.globalAlpha = g.hurtCd > 0 && Math.floor(g.t * 20) % 2 ? 0.4 : 1;
+  emoji("🐔", g.x, g.y, 34, -g.face);
+  ctx.globalAlpha = 1;
+  for (const p of g.parts) { ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, 3, 3); }
+  for (const t of g.texts) text(t.s, t.x, t.y, 14, t.col);
+  if (touch && state === "play") { ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(touch.x0, touch.y0, 40, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(touch.x, touch.y, 16, 0, 7); ctx.stroke(); }
+}
+
+function drawHud() {
+  ctx.fillStyle = "#000a"; ctx.fillRect(0, 0, W, 34);
+  ctx.fillStyle = "#4fc3f7"; ctx.fillRect(0, 0, W * g.xp / g.xpNext, 6);
+  text(`Lv.${g.level}`, 10, 22, 16, "#fff", "left");
+  text(fmtTime(g.t), W / 2, 22, 18);
+  text(`撃破 ${g.kills}`, W - 10, 22, 16, "#fff", "right");
+  ctx.fillStyle = "#400"; ctx.fillRect(110, 14, 160, 12);
+  ctx.fillStyle = "#e53935"; ctx.fillRect(110, 14, 160 * Math.max(0, g.hp) / g.maxHp, 12);
+  text(`${Math.ceil(Math.max(0, g.hp))}/${g.maxHp}`, 190, 20, 11);
+}
+
+function draw() {
+  if (state === "title") {
+    ctx.fillStyle = "#1b1b2a"; ctx.fillRect(0, 0, W, H);
+    emoji("🐔", W / 2, 70, 70);
+    text("ニワトリ・サバイバー", W / 2, 135, 38, "#ffd54f");
+    text("パンと靴下の大群から生き延びろ!", W / 2, 175, 18, "#ccc");
+    text(`🪙 ${save.coins}　　最高記録 ${fmtTime(save.best)}`, W / 2, 218, 18);
+    titleButtons().forEach((r, i) => {
+      const m = META[i], c = metaCost(m), ok = save.coins >= c;
+      box(r, ok ? "#3a4a3a" : "#2c2c3c", ok ? "#7fd17f" : "#555");
+      text(`[${i + 1}] ${m.name}  Lv.${save.up[m.id]}`, r.x + 16, r.y + 20, 18, "#fff", "left");
+      text(m.desc, r.x + 16, r.y + 42, 14, "#bbb", "left");
+      text(`🪙 ${c}`, r.x + r.w - 16, r.y + 29, 20, ok ? "#ffd54f" : "#777", "right");
+    });
+    box(startBtn, "#c0392b", "#ff8a80");
+    text("スタート (Space)", W / 2, 530, 24);
+    text("移動: WASD/矢印キー or 画面ドラッグ ／ 攻撃は自動", W / 2, 580, 13, "#999");
+    return;
+  }
+  drawWorld(); drawHud();
+  if (state === "levelup") {
+    ctx.fillStyle = "#000b"; ctx.fillRect(0, 0, W, H);
+    text("レベルアップ!", W / 2, 130, 36, "#ffd54f");
+    text("強化を1つ選ぼう (1/2/3 or クリック)", W / 2, 170, 16, "#ccc");
+    buttons.forEach((b, i) => {
+      box(b); text(`[${i + 1}]`, b.x + b.w / 2, b.y + 35, 18, "#8c8cc0");
+      text(b.c.name, b.x + b.w / 2, b.y + 90, 20); text(b.c.desc, b.x + b.w / 2, b.y + 135, 15, "#bbb");
+    });
+  } else if (state === "dead") {
+    ctx.fillStyle = "#000c"; ctx.fillRect(0, 0, W, H);
+    emoji("🍗", W / 2, 150, 70);
+    text("ゲームオーバー", W / 2, 230, 38, "#ff6b6b");
+    text(g.msg, W / 2, 280, 22);
+    text(`生存 ${fmtTime(g.t)}　撃破 ${g.kills}　Lv.${g.level}`, W / 2, 335, 20);
+    if (g.newBest) text("★ 最高記録更新! ★", W / 2, 370, 18, "#ffd54f");
+    text(`🪙 +${g.coinsEarned} (合計 ${save.coins})`, W / 2, 410, 20, "#ffd54f");
+    text("クリック / Space でタイトルへ", W / 2, 490, 16, "#aaa");
+  }
+}
+
+// ---------- メインループ ----------
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state === "play") update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
